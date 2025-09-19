@@ -36,7 +36,7 @@ export function MessageList({
           }`}
         >
           <div
-            className={`inline-block p-3 rounded-lg max-w-2xl ${
+            className={`whitespace-pre-wrap inline-block p-3 rounded-lg max-w-2xl ${
               message.role === "user"
                 ? "bg-indigo-700 text-white"
                 : "bg-gray-100 text-black"

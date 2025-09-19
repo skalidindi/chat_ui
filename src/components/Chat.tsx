@@ -4,13 +4,20 @@ import { Suggestion } from "./Suggestion";
 import { MessageList } from "./MessageList";
 import { useStreamingChat } from "../hooks/useStreamingChat";
 import { useScrollBehavior } from "../hooks/useScrollBehavior";
+import { createConversation } from "../services/openai";
+import type { Conversation } from "../types/conversation";
 
 interface ChatProps {
   className?: string;
   conversation?: string;
+  onCreateConversation: (conversation: Conversation) => void;
 }
 
-export function Chat({ className, conversation }: ChatProps) {
+export function Chat({
+  className,
+  conversation,
+  onCreateConversation,
+}: ChatProps) {
   // Refs for form elements
   const inputRef = useRef<HTMLInputElement>(null);
   const buttonId = useId();
@@ -43,8 +50,15 @@ export function Chat({ className, conversation }: ChatProps) {
   }, [scrollToBottom]);
 
   // Handle message submission
-  const handleSendMessage = (input: string) => {
-    sendMessage(input, conversation);
+  const handleSendMessage = async (input: string) => {
+    if (!conversation) {
+      const newConversation = await createConversation();
+      onCreateConversation(newConversation);
+      sendMessage(input, newConversation.id);
+    } else {
+      sendMessage(input, conversation);
+    }
+
     // Clear input after sending
     if (inputRef.current) {
       inputRef.current.value = "";

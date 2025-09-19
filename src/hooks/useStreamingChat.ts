@@ -104,7 +104,7 @@ export function useStreamingChat({
         conversation
       );
     },
-    [handleChunk, currentStreamText]
+    [handleChunk]
   );
 
   const cancelStream = useCallback(() => {

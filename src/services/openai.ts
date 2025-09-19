@@ -1,3 +1,5 @@
+import type { Conversation } from "../types/conversation";
+
 export type StreamStatus =
   | "starting"
   | "streaming"
@@ -5,6 +7,25 @@ export type StreamStatus =
   | "error"
   | "timeout"
   | "cancelled";
+const API_KEY = import.meta.env.VITE_OPEN_AI_API_KEY;
+
+export async function createConversation() {
+  const response = await fetch("https://api.openai.com/v1/conversations", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: "",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create conversation");
+  }
+
+  const data = (await response.json()) as Conversation;
+  return data;
+}
 
 export async function streamChat(
   input: string,
@@ -13,11 +34,9 @@ export async function streamChat(
   controller: AbortController,
   conversation?: string,
   previous_response_id?: string,
-  timeoutMs = 30000,
+  timeoutMs = 60000,
   options = {} // https://platform.openai.com/docs/api-reference/responses/create
 ): Promise<string | null> {
-  const API_KEY = import.meta.env.VITE_OPEN_AI_API_KEY;
-
   const timeoutId = setTimeout(() => {
     controller.abort("timeout");
     onStatusChange("timeout");

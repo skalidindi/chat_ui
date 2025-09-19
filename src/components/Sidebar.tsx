@@ -1,24 +1,21 @@
-import { useState } from "react";
 import favicon from "../assets/favicon.ico";
 import type { Conversation } from "../types/conversation";
 import { ConversationList } from "./ConversationList";
+import { createConversation } from "../services/openai";
 
 export function SideBar({
   onSelect,
   selectedConversation,
+  conversations,
+  onCreateConversation,
 }: {
+  conversations: Conversation[];
   onSelect: (conversation: string) => void;
   selectedConversation: string;
+  onCreateConversation: (conversation: Conversation) => void;
 }) {
-  const [conversations, setConversations] = useState<Array<Conversation>>([
-    {
-      id: "1",
-      title: "convo 1",
-    },
-  ]);
-
   return (
-    <aside className="flex flex-col gap-2">
+    <aside className="flex flex-col gap-2 max-w-48">
       <header className="flex flex-row gap-2 mb-4">
         <img
           className="h-6 w-fit"
@@ -39,14 +36,12 @@ export function SideBar({
       <button
         type="button"
         className="font-semibold rounded-lg h-12 hover:bg-neutral-100 border border-neutral-200 shadow-sm"
-        onClick={() => {
-          setConversations((prev) => [
-            ...prev,
-            {
-              id: (prev.length + 1).toString(),
-              title: "new convo placeholder",
-            },
-          ]);
+        onClick={async () => {
+          const newConversation = await createConversation();
+
+          if (newConversation) {
+            onCreateConversation(newConversation);
+          }
         }}
       >
         Start a new chat

@@ -16,11 +16,11 @@ export function ConversationListItem({
       }}
       type="button"
       className={`flex flex-col justify-center h-8 border border-neutral-200 p-4
-        rounded-lg cursor-pointer ${
+        rounded-lg cursor-pointer truncate ${
           isSelected ? "bg-neutral-400 rounded-lg" : "hover:bg-neutral-100"
         }`}
     >
-      {conversation.title}
+      {conversation.id}
     </button>
   );
 }
