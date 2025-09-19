@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { streamChat, type StreamStatus } from "../services/openai";
 import { debounce } from "../utils/debounce";
+import { useStreamBuffer } from "./useStreamBuffer";
 import type { Message } from "../types/message";
 
 interface UseStreamingChatReturn {
@@ -23,10 +24,11 @@ export function useStreamingChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStreamText, setCurrentStreamText] = useState("");
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
-  const streamContentRef = useRef("");
+  
+  // Streaming buffer for smooth text rendering
+  const { displayText: currentStreamText, appendChunk, clearBuffer, getFullText } = useStreamBuffer();
 
   // Debounced aria updates for accessibility
   const debouncedAriaUpdate = useMemo(
@@ -40,11 +42,10 @@ export function useStreamingChat({
   // Process chunks from the stream
   const handleChunk = useCallback(
     (chunk: string) => {
-      streamContentRef.current += chunk;
-      setCurrentStreamText((current) => current + chunk);
+      appendChunk(chunk);
       debouncedAriaUpdate(chunk);
     },
-    [debouncedAriaUpdate]
+    [appendChunk, debouncedAriaUpdate]
   );
 
   const sendMessage = useCallback(
@@ -62,7 +63,7 @@ export function useStreamingChat({
       setMessages((prev) => [...prev, userMessage]);
 
       // Reset streaming state
-      setCurrentStreamText("");
+      clearBuffer();
       setIsStreaming(true);
       setIsLoading(true);
 
@@ -79,11 +80,11 @@ export function useStreamingChat({
             case "completed": {
               const assistantMessage: Message = {
                 id: Date.now() + 1,
-                content: streamContentRef.current,
+                content: getFullText(),
                 role: "assistant",
               };
               setMessages((prev) => [...prev, assistantMessage]);
-              streamContentRef.current = "";
+              clearBuffer();
               setIsStreaming(false);
               setIsLoading(false);
               setAbortController(null);
@@ -104,7 +105,7 @@ export function useStreamingChat({
         conversation
       );
     },
-    [handleChunk]
+    [handleChunk, clearBuffer, getFullText]
   );
 
   const cancelStream = useCallback(() => {
